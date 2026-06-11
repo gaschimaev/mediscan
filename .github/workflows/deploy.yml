@@ -3,7 +3,7 @@ name: Deploy EAS Cloud Computing
 on:
   push:
     branches:
-      - main  # Mesin akan menyala setiap ada kode masuk ke cabang 'main'
+      - main
 
 jobs:
   # PROSES 1: Membungkus kode jadi Docker dan mengirim ke DockerHub
@@ -29,7 +29,7 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/mediscan-backend:latest ./backend
           docker push ${{ secrets.DOCKER_USERNAME }}/mediscan-backend:latest
 
-  # PROSES 2: Meremote server AWS Frontend
+  # PROSES 2: Deploy ke Server Frontend AWS
   deploy-frontend:
     needs: build-and-push
     runs-on: ubuntu-latest
@@ -41,12 +41,13 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKER_USERNAME }}/mediscan-frontend:latest
-            docker stop web-frontend || true
-            docker rm web-frontend || true
-            docker run -d --name web-frontend -p 80:80 ${{ secrets.DOCKER_USERNAME }}/mediscan-frontend:latest
+            sudo systemctl start docker
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/mediscan-frontend:latest
+            sudo docker stop web-frontend || true
+            sudo docker rm web-frontend || true
+            sudo docker run -d --name web-frontend -p 80:80 ${{ secrets.DOCKER_USERNAME }}/mediscan-frontend:latest
 
-  # PROSES 3: Meremote server AWS Backend
+  # PROSES 3: Deploy ke Server Backend AWS
   deploy-backend:
     needs: build-and-push
     runs-on: ubuntu-latest
@@ -58,8 +59,8 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKER_USERNAME }}/mediscan-backend:latest
-            docker stop web-api || true
-            docker rm web-api || true
-            # Pastikan portnya sesuai (saya pakai 8000 sebagai contoh)
-            docker run -d --name web-api -p 8000:8000 ${{ secrets.DOCKER_USERNAME }}/mediscan-backend:latest
+            sudo systemctl start docker
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/mediscan-backend:latest
+            sudo docker stop web-api || true
+            sudo docker rm web-api || true
+            sudo docker run -d --name web-api -p 8000:8000 ${{ secrets.DOCKER_USERNAME }}/mediscan-backend:latest

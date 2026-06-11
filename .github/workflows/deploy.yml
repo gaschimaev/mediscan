@@ -48,7 +48,7 @@ jobs:
             sudo docker run -d --name web-frontend -p 80:80 ${{ secrets.DOCKER_USERNAME }}/mediscan-frontend:latest
 
   # PROSES 3: Deploy ke Server Backend AWS
-  deploy-backend:
+    deploy-backend:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
@@ -63,4 +63,14 @@ jobs:
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/mediscan-backend:latest
             sudo docker stop web-api || true
             sudo docker rm web-api || true
-            sudo docker run -d --name web-api -p 8000:8000 ${{ secrets.DOCKER_USERNAME }}/mediscan-backend:latest
+            sudo docker run -d --name web-api \
+              -e HF_TOKEN=${{ secrets.HF_TOKEN }} \
+              -e DB_HOST=${{ secrets.DB_HOST }} \
+              -e DB_PORT=${{ secrets.DB_PORT }} \
+              -e DB_NAME=${{ secrets.DB_NAME }} \
+              -e DB_USER=${{ secrets.DB_USER }} \
+              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              -e AZURE_STORAGE_CONNECTION_STRING="${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" \
+              -e AZURE_CONTAINER_NAME=${{ secrets.AZURE_CONTAINER_NAME }} \
+              -p 8000:8000 \
+              ${{ secrets.DOCKER_USERNAME }}/mediscan-backend:latest
